@@ -1,2 +1,2 @@
 # lpcxpresso-lwip-mqtt
-LPCXpress175x + LWIP + MQTT
+LPC175x_6x + LWIP + MQTT
