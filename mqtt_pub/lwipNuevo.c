@@ -32,6 +32,29 @@
 #include "lwip/netif.h"
 #include "lwip/timeouts.h"
 
+/* This are for the leds and switches */
+#define GPIO_LED_PIN 2
+#define GPIO_INTERRUP_PIN 1
+#define GPIO_IRQ_HANDLER EINT3_IRQHandler
+//////////////////////////////////////////////////////////////////
+#define GPIO_INTERRUP_PIN3 1 //Para el switch 3
+#define GPIO_IRQ_HANDLER3 EINT2_IRQHandler //Interrupción externa 2
+//////////////////////////////////////////////////////////////////
+int estado = 0;
+void GPIO_IRQ_HANDLER() {
+if(estado == 0){
+//LPC_GPIO2->FIOSET |= 1<<GPIO_LED_PIN;
+estado = 1;
+}
+else{
+//LPC_GPIO2->FIOCLR |= 1<<GPIO_LED_PIN;
+estado = 0;
+}
+//LPC_GPIOINT->IO0IntClr |= 1 << GPIO_INTERRUP_PIN;
+//printf ("Interrupcion\n");
+}
+/* end of leds and switches */
+
 
 //#include "lwip/apps/mqtt.h"
 #include "lwip_mqtt.h"
@@ -68,6 +91,15 @@ static void prvSetupHardware(void)
     Board_LED_Set(0, false);
 	/* Setup a 1mS sysTick for the primary time base */
 	SysTick_Enable(1);
+
+	/* Initial LED0 state is off */
+		Board_LED_Set(LEDS_LED2, false);
+
+    /* led and switch's stuff */
+    bool LedState = false;
+    Board_LED_Set(LEDS_LED3, false);
+    /* end of led and switches */
+
 #endif
 #endif
 
@@ -116,22 +148,11 @@ int main(void) {
   mqtt_client_t *client;
   client = mqtt_client_new();
   if(client != NULL) {
-    example_do_connect(client);
+    example_do_connect(client, "placa/led2");
     const char *pacote= "O0OoO0";
-    example_publish(client, &pacote);
+    example_publish(client, pacote);
   }
-	/* static memory client */
 
-//  mqtt_client_t static_client;
-//  example_do_connect(&static_client);
-  int conectado;
-//
-    const char *pacote= "O";
-	conectado = mqtt_client_is_connected(client);
-	if(conectado==1){
-		example_publish(client, &pacote);
-	}
-//	else{mqtt_disconnect(&static_client);}
 
 	/* This could be done in the sysTick ISR, but may stay in IRQ context
 	   too long, so do this stuff with a background loop. */
@@ -196,6 +217,8 @@ int main(void) {
 				DEBUGOUT("IP_ADDR    : %s\r\n", ipaddr_ntoa_r((const ip_addr_t *) &lpc_netif.ip_addr, tmp_buff, 16));
 				DEBUGOUT("NET_MASK   : %s\r\n", ipaddr_ntoa_r((const ip_addr_t *) &lpc_netif.netmask, tmp_buff, 16));
 				DEBUGOUT("GATEWAY_IP : %s\r\n", ipaddr_ntoa_r((const ip_addr_t *) &lpc_netif.gw, tmp_buff, 16));
+				const char *pacote= "O0OoO0";
+				example_publish(client, ipaddr_ntoa_r((const ip_addr_t *) &lpc_netif.ip_addr, tmp_buff, 16));
 				prt_ip = 1;
 			}
 		}
